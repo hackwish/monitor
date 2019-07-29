@@ -1,0 +1,80 @@
+groups:
+  - name: common_recording_rules
+    rules:
+    ##COMMON
+      #CPU
+      - record: monitor:node_cpu:cpu_used_percents
+        expr: 100 - (avg by (instance) (netdata_system_cpu_percentage_average{dimension="idle"}))
+              OR 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)
+
+      #LOAD1 AVG
+      - record: monitor:node_load:load1
+        expr: netdata_system_load_load_average{dimension="load1"} 
+              OR node_load1
+
+      #LOAD5 AVG
+      - record: monitor:node_load:load5
+        expr: netdata_system_load_load_average{dimension="load5"} 
+              OR node_load5
+
+      #LOAD15 AVG
+      - record: monitor:node_load:load15
+        expr: netdata_system_load_load_average{dimension="load15"} 
+              OR node_load15
+
+      #RAM
+      - record: monitor:node_ram:ram_usage:percents
+        expr: 100 - 100 * (sum(netdata_system_ram_MB_average{dimension=~"free|cached|buffers"}) by (instance) / sum(netdata_system_ram_MB_average) by (instance)) OR 100 - 100 * (sum(netdata_system_ram_MiB_average{dimension=~"free|cached|buffers"}) by (instance) / sum(netdata_system_ram_MiB_average) by (instance))
+              OR 100 * (node_memory_MemFree / node_memory_MemTotal) OR 100 * (node_memory_MemFree_bytes / node_memory_MemTotal_bytes)
+
+      #SWAP
+      - record: monitor:node_swap:used
+        expr: netdata_system_swap_MB_average{dimension="used"} OR netdata_system_swap_MiB_average{dimension="used"}
+              OR node_memory_SwapCached_bytes/1024/1024
+
+      #Disk Space
+      - record: monitor:node_disk:usage_percents
+        expr: 100 * (sum by(instance, family) (netdata_disk_space_GB_average{dimension!="avail"}) / sum by(instance, family) (netdata_disk_space_GB_average)) OR 100 * (sum by(instance, family) (netdata_disk_space_GiB_average{dimension!="avail"}) / sum by(instance, family) (netdata_disk_space_GiB_average))
+              OR 100 - 100 * ( node_filesystem_free / node_filesystem_size ) OR 100 * ((node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes)
+
+      #Disk IO %util
+      - record: monitor:node_disk:io_percents
+        expr: netdata_disk_util___of_time_working_average 
+              OR 100 * (rate(node_disk_io_time_seconds_total[1m]))
+
+      #Disk IO Reads MB/s
+      - record: monitor:node_disk:io_reads
+        expr: netdata_disk_io_kilobytes_persec_average{dimension="reads"} /1024 OR netdata_disk_io_KiB_persec_average{dimension="reads"} /1024
+              OR rate(node_disk_read_bytes_total[1m]) / 1024 / 1024
+
+      #Disk IO Writes MB/s
+      - record: monitor:node_disk:io_writes
+        expr: (netdata_disk_io_kilobytes_persec_average{dimension="writes"} / 1024) * -1 OR (netdata_disk_io_KiB_persec_average{dimension="writes"} / 1024) * -1
+              OR rate(node_disk_written_bytes_total[1m]) / 1024 / 1024
+
+      #Disk IO Read Latency
+      - record: monitor:node_disk:io_read_latency
+        expr: netdata_disk_await_milliseconds_operation_average{dimension="reads"} / 1000 OR netdata_disk_await_ms_per_operation_average{dimension="reads"} / 1000
+              OR rate(node_disk_read_time_seconds_total[1m]) / rate(node_disk_reads_completed_total[1m])
+
+      #Disk IO write Latency
+      - record: monitor:node_disk:io_write_latency
+        expr: netdata_disk_await_milliseconds_operation_average{dimension="writes"} / 1000 *-1 OR netdata_disk_await_ms_per_operation_average{dimension="writes"} / 1000 * -1
+              OR rate(node_disk_write_time_seconds_total[1m]) / rate(node_disk_writes_completed_total[1m])
+
+  - name: dedicated_recording_rules
+    rules:
+    ##DEDICATED
+      #HAPROXY
+      - record: monitor:node_ha:haproxy_frontend_sessions
+        expr: netdata_haproxy_f_scur_sessions_average
+              OR haproxy_frontend_current_sessions
+
+      - record: monitor:node_ha:haproxy_frontend_http_codes_error
+        expr: sum(rate(netdata_web_log_detailed_response_codes_requests_persec_average{dimension=~"4.*|5.*"}[60s])) by (dimension,instance)
+              OR sum(rate(haproxy_frontend_http_responses_total{code=~"4xx|5xx"}[60s])) by (code,instance)
+
+      #APACHE
+      - record: monitor:node_apache:http_processes
+        expr: netdata_apps_processes_processes_average{dimension="httpd"}
+              OR namedprocess_namegroup_num_procs{groupname="apache2"}

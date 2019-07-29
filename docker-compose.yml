@@ -1,0 +1,150 @@
+version: '2'
+
+services:
+  prometheus:
+    image: monitor-prometheus
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 208.67.222.222
+    ports:
+      - "9090:9090"
+    environment:
+      SET_CONTAINER_TIMEZONE: 'true'
+      CONTAINER_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+
+  alertmanager:
+    image: monitor-alertmanager
+    environment:
+      SET_CONTAINER_TIMEZONE: 'true'
+      CONTAINER_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+    ports:
+      - "9093:9093"
+
+  blackbox:
+    image: monitor-blackbox-exporter
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 208.67.222.222
+    ports:
+      - "9115:9115"
+    environment:
+      SET_CONTAINER_TIMEZONE: 'true'
+      CONTAINER_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+    read_only: true
+
+  metricbeat:
+    image: monitor-metricbeat
+    ports:
+      - "8080:8080"
+    environment:
+      setup.kibana.host: "kibana:5601"
+      output.elasticsearch.hosts: "elasticsearch:9200"
+
+  grafana:
+    image: monitor-grafana
+    container_name: monitor-grafana
+    extends:
+      file: grafana/envars.yml
+      service: envars
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 208.67.222.222
+    environment:
+      SET_CONTAINER_TIMEZONE: 'true'
+      CONTAINER_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+    ports:
+      - "3000:3000"
+      
+  uptimerobot:
+    container_name: uptimerobot
+    hostname: uptimerobot
+    image: hnrd/uptimerobot_exporter
+    environment:
+      UPTIMEROBOT_API_KEY: u450897-1383f92fee5bbd7fe707c4d2
+    read_only: true
+
+  # prometheusbeat:
+  #   image: prometheusbeat
+  #   ports:
+  #     - "8080:8080"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment: 
+      discovery.type: "single-node"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.0.0
+    ports:
+      - "5601:5601"
+
+  victoria:
+    image: valyala/victoria-metrics
+    ports:
+      - "8428:8428"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 208.67.222.222
+    environment:
+      SET_CONTAINER_TIMEZONE: 'true'
+      CONTAINER_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+
+  kafka:
+    image: telefonica/prometheus-kafka-adapter:1.2.0
+    ports:
+      - "8080:8080"
+
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 208.67.222.222
+    environment:
+      SET_CONTAINER_TIMEZONE: 'true'
+      CONTAINER_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+      KAFKA_BROKER_LIST: im-ambari01-ng1.txel.systems:2181
+
+  # thanos:
+  #   image: improbable/thanos
+    
+  # irondb:
+  #   image: irondb/irondb
+  #   ports:
+  #     - "8112:8112"
+
+  # irondb-prometheus-adapter:
+  #   image: irondb/irondb-prometheus-adapter
+  #   command: ./irondb-prometheus-adapter -addr :1234 -log debug -snowth http://irondb:8112
+  #   ports:
+  #     - "1234:8112"
+
+  # consul:
+  #   image: consul
+
+  # influxdb:
+  #   hostname: influxdb
+  #   image: influxdb
+  #   restart: always
+  #   ports:
+  #     - "8086:8086"
+  #     - "8083:8083"
+  #   environment:
+  #     - INFLUXDB_DB=prometheus
+  #     - INFLUXDB_USER=prometheus
+  #     - INFLUXDB_USER_PASSWORD=prometheus
+  #   networks:
+  #     - monitor
+  #   labels:
+  #     - "traefik.enable=false"

@@ -1,0 +1,18 @@
+
+metricbeat.config.modules:
+  path: /usr/share/metricbeat/modules.d/*.yml
+
+metricbeat.modules:
+- module: prometheus
+  period: 10s
+  hosts: ["prometheus:9090"]
+  metrics_path: '/federate'
+  query:
+    'match[]': '{__name__!=""}'
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+#  username: "elastic"
+#  password: "<password>"
+setup.kibana:
+  host: "kibana:5601"

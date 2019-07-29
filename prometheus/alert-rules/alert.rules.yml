@@ -1,0 +1,207 @@
+groups:
+- name: alertfatal.rules
+##COMMON
+  rules:
+  - alert: FATAL_CPU
+    expr: monitor:node_cpu:cpu_used_percents > 90
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: CPU con uso sobre 90% en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $value }}%
+
+  - alert: FATAL_LoadAVG1m
+    expr: monitor:node_load:load1 > 31
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: La carga de CPU está sobre 31, equivalente a 32 CPU a toda capacidad en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}
+  
+  - alert: FATAL_LoadAVG5m
+    expr: monitor:node_load:load5 > 31
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: La carga de CPU está sobre 31, equivalente a 32 CPU a toda capacidad en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}
+
+  - alert: FATAL_LoadAVG15m
+    expr: monitor:node_load:load15 > 31
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: La carga de CPU está sobre 31, equivalente a 32 CPU a toda capacidad en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}
+
+  - alert: FATAL_RAM
+    expr: monitor:node_ram:ram_usage:percents > 95
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: El uso de RAM está sobre el 95% en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ humanize $value }}%
+
+  - alert: FATAL_SWAP
+    expr: monitor:node_swap:used > 8000
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: El sistema está Swappeando sobre 8000 MB en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }} MB
+
+  - alert: FATAL_USODisco
+    expr: monitor:node_disk:usage_percents > 95
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado, el USO de disco está sobre 95%. Programa una limpieza en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }}{{ $labels.mountpoint }} {{ $value }}%
+
+  - alert: FATAL_IODisco
+    expr: monitor:node_disk:io_percents > 90
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado, el IO de disco está sobre 90% en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }}{{ $labels.device }} {{ $value }}%
+
+  - alert: FATAL_IO_READS
+    expr: monitor:node_disk:io_reads > 500
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado, el IO de LECTURA del disco está sobre 500MB/s en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }} MB/s
+
+  - alert: FATAL_IO_WRITES
+    expr: monitor:node_disk:io_writes > 500
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado, el IO de ESCRITURA del disco está sobre 500MB/s en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }} MB/s
+
+  - alert: FATAL_IO_LATENCY_READS
+    expr: monitor:node_disk:io_read_latency > 3
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado, la LATENCIA IO de LECTURA del disco está sobre 2 segundos en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }} segs
+
+  - alert: FATAL_IO_LATENCY_WRITES
+    expr: monitor:node_disk:io_write_latency > 3
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado, la LATENCIA IO de ESCRITURA del disco está sobre 2 segundos en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }} segs
+
+##DEDICADOS
+
+  - alert: FATAL_HAProxyConn
+    expr: monitor:node_ha:haproxy_frontend_sessions > 300
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado hay más de 300 sesiones HA activas en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ humanize $value }}
+
+  - alert: FATAL_HA_CODE_ERROR
+    expr: monitor:node_ha:haproxy_frontend_http_codes_error > 10     
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: Cuidado hubo más de 10 error HTTP en instancia {{ $labels.instance }}
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}
+
+  - alert: FATAL_ApacheAVG
+    expr: (netdata_web_log_response_time_milliseconds_average{dimension="avg"}) >= 5000
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ humanize $value }} segs
+
+  - alert: FATAL_ApacheMAX
+    expr: (netdata_web_log_response_time_milliseconds_average{dimension="max"}) >= 10000
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ humanize $value }} segs
+
+  - alert: FATAL_ApacheProcesses
+    expr:  monitor:node_apache:http_processes > 100
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ humanize $value }}
+
+  - alert: FATAL_ApacheWorkers
+    expr: netdata_apache_workers_workers_average{dimension=~"busy|idle"} > 100
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ humanize $value }}
+
+
+  - alert: FATAL_KEY_EFFICIENCY
+    expr: round(100 - (mysql_global_status_innodb_buffer_pool_reads / mysql_global_status_innodb_buffer_pool_read_requests),4) < 50
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipilla
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}%
+
+  - alert: FATAL_THREADS_CONNECTED
+    expr: mysql_global_status_threads_connected > 800
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}
+
+  - alert: FATAL_THREADS_RUNNING
+    expr: mysql_global_status_threads_running > 100
+    for: 1m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: HOST => {{ $labels.instance }}, VALOR => {{ $labels.family }} {{ $value }}
+
+#BLACKBOX ALERTS
+#SSL
+  - alert: FATAL_SSL_EXPIRY
+    expr: probe_ssl_earliest_cert_expiry - time()  <= 0
+    for: 10m
+    labels:
+      severity: "3"
+    annotations:
+      description: En este nivel se fue todo al carajo y podemos poner el carro de sopaipillas
+      summary: 'HOST => {{ $labels.host }}, URL => {{ $labels.instance }}, MONITOR: {{
+        $labels.job }}, VALOR => {{ $labels.family }} {{ humanize $value }}'

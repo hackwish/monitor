@@ -1,0 +1,57 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+
+  http_post_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      method: POST
+
+  http_ws:
+    prober: http
+    timeout: 10s
+    http:
+      fail_if_body_not_matches_regexp:
+      - "xml version"
+
+  tcp_check:
+    prober: tcp
+
+  ping:
+    prober: icmp
+    timeout: 10s
+    icmp:
+      preferred_ip_protocol: "ip4"
+
+  icmp:
+    prober: icmp
+    timeout: 10s
+
+  irc_banner:
+    prober: tcp
+    tcp:
+      query_response:
+      - send: NICK prober
+      - send: USER prober prober prober :prober
+      - expect: PING :([^ ]+)
+        send: PONG ${1}
+      - expect: ^:[^ ]+ 001
+
+  pop3s_banner:
+    prober: tcp
+    tcp:
+      query_response:
+      - expect: ^+OK
+      tls: true
+
+  ssh_banner:
+    prober: tcp
+    timeout: 10s
+    tcp:
+      query_response:
+      - expect: ^SSH-2.0-
+

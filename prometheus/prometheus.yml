@@ -1,0 +1,313 @@
+global:
+  scrape_interval: "15s"
+  evaluation_interval: "1m"
+  
+  external_labels:
+      monitor: 'monitor'
+      dc: mon
+ 
+# Remote write configuration (for Graphite, OpenTSDB, or InfluxDB).
+remote_write:
+  # ##INFLUX
+  # # - url: "http://influxdb:8086/api/v1/prom/write?db=prometheus&u=prometheus&p=prometheus"
+  # #ELASTICSEARCH BY PROMETHEUSBEAT
+  # - url: "http://prometheusbeat:8080/prometheus"
+  #VICTORIA-METRICS
+  - url: http://victoria:8428/api/v1/write
+    queue_config:
+      max_samples_per_send: 10000
+  # #KAFKA
+  # - url: "http://kafka:8080/receive"
+
+##remote_read:
+    ##INFLUX
+    #- url: "http://influxdb:8086/api/v1/prom/read?db=prometheus&u=prometheus&p=prometheus"
+
+rule_files:
+  - '/alertmanager/record.rules.yml'
+  - '/alertmanager/alert.rules.yml'
+
+#ALERTING
+alerting:
+   # alert_relabel_configs:
+   #   - source_labels: [dc]
+   #       regex: (.+)\d+
+   #       target_label: dc
+
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - "alertmanager:9093"
+
+#SCRAPE
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+        - "prometheus:9090"
+
+  # - job_name: "pushgateway"
+  #   honor_labels: true
+  #   static_configs:
+  #     - targets:
+  #       - "pushgateway:9091"
+
+  - job_name: "alertmanager"
+    static_configs:
+    - targets:
+         - "alertmanager:9093"
+
+  # - job_name: 'dns-netdata-scrape'
+  #   metrics_path: '/api/v1/allmetrics'
+  #   params:
+  #     format: [prometheus]
+  #     source: [average]
+  #   honor_labels: true
+  #   dns_sd_configs:
+  #   - names:
+  #     refresh_interval: 60s
+  #     port: 19999
+  #     type: 'A'
+
+  #   relabel_configs:
+  #     - source_labels: ['__meta_dns_name']
+  #       target_label:  instance
+  #       replacement:   '$1'
+
+  #     - source_labels: ['__meta_dns_name']
+  #       regex:         'im\-(.+?)\-.+?\-.+?\.txel\.systems'
+  #       target_label:  'service'
+  #       replacement:   '$1'
+
+  #     - source_labels: ['__meta_dns_name']
+  #       regex:         'im\-.+?\-(.+?)\-.+?\.txel\.systems'
+  #       target_label:  'role'
+  #       replacement:   '$1'
+
+  #     - source_labels: ['__meta_dns_name']
+  #       regex:         'im\-.+?\-.+?\-(.+?)\.txel\.systems'
+  #       target_label:  'datacenter'
+  #       replacement:   '$1'
+
+##########
+# CONSUL #
+########## 
+
+  # - job_name: 'consul-scrape'
+  #   metrics_path: "/prometheus"
+  #   consul_sd_configs:
+  #     - server: 'consul:8500'
+  #   relabel_configs:
+  #   - source_labels: [__meta_consul_tags]
+  #     regex: .*im-.*
+  #     action: keep
+  #   - source_labels: [__meta_consul_tags]
+  #     regex: .*,version=([^,]+),.*
+  #     replacement: '${1}'
+  #     target_label: version
+
+###########
+# NETDATA #
+###########
+  - job_name: 'netdata-scrape'
+    metrics_path: '/api/v1/allmetrics'
+    params:
+      format: [prometheus]
+      source: [average]
+    honor_labels: true
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: (.*)(:.*)?
+        replacement: '${1}:19999'
+        target_label:  __address__      
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:19999'
+        target_label:  'instance'
+        replacement:   '$1'
+
+#################
+# NODE EXPORTER #
+#################
+  - job_name: "node-exporter"
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+    relabel_configs:
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9100'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9100'
+        target_label:  'instance'
+        replacement:   '$1'
+
+################
+####EXPORTERS###
+################
+#PROCESS EXPORTER
+  - job_name: process-exporter
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9256'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9256'
+        target_label:  'instance'
+        replacement:   '$1'
+
+#UPTIMEROBOT EXPORTER
+  - job_name: 'uptimerobot-exporter'
+    scrape_interval: 300s
+    static_configs:
+    - targets: ['uptimerobot:9705']
+ 
+#MYSQL EXPORTER
+  - job_name: 'mysql-exporter'
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9104'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9104'
+        target_label:  'instance'
+        replacement:   '$1'
+
+    params:
+      collect[]:
+        - global_status
+        - global_variables
+        - info_schema.processlist
+        - info_schema.query_response_time
+
+#APACHE EXPORTER
+  - job_name: 'apache-exporter'
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9117'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9117'
+        target_label:  'instance'
+        replacement:   '$1'
+
+#HAPROXY EXPORTER
+  - job_name: 'haproxy-exporter'
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9101'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9101'
+        target_label:  'instance'
+        replacement:   '$1'
+
+ #REDIS EXPORTER
+  - job_name: 'redis-exporter'
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9121'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9121'
+        target_label:  'instance'
+        replacement:   '$1'
+
+#GEARMAN EXPORTER
+  - job_name: 'gearman-exporter'
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9081'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9081'
+        target_label:  'instance'
+        replacement:   '$1'
+
+#######################
+# SERVICIOS EXPUESTOS #
+#######################
+
+  #KONG
+  - job_name: "kong"
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:8001'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:98001'
+        target_label:  'instance'
+        replacement:   '$1'
+
+  #DOCKER
+  - job_name: "docker"
+    scrape_interval: 10s
+    file_sd_configs:
+      - files:
+          - '/blackbox/blackbox_hosts.yml'
+      - source_labels: [__address__]
+        regex:         '(.+?)'
+        target_label:  __address__
+        replacement: '${1}:9323'
+
+      - source_labels: [__address__]
+        regex:         '(.+?)\:9323'
+        target_label:  'instance'
+        replacement:   '$1'
+
+# ############################################
+
+ #BLACKBOX EXPORTER  
+  - job_name: "blackbox"
+    static_configs:
+    - targets:
+        - "blackbox:9115"

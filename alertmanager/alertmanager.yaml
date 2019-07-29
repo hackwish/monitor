@@ -1,0 +1,47 @@
+global:
+  resolve_timeout: 15m
+  slack_api_url: "https://hooks.slack.com/services/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dsdfsdafsdaf"
+
+# The directory from which notification templates are read.
+templates: 
+- '/etc/alertmanager/*.tmpl'
+
+route:
+  group_by: ['alertname', 'instance']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h 
+  receiver: 'alerts'
+
+  routes:
+  - match:
+      severity: '2'
+    receiver: 'monitor-alerts'
+  - match:
+      severity: '3'
+    receiver: 'monitor-alerts'
+
+inhibit_rules:
+- source_match:
+    severity: '2'
+  target_match:
+    severity: '1'
+# - source_match:
+#     severity: '3'
+#   target_match:
+#     severity: '2'
+  equal: ['alertname', 'instance']
+
+receivers:
+- name: "alerts" #dummy group for all alerts
+- name: "monitor-alerts"
+  pagerduty_configs:
+  - service_key: 2f1d6f5ed5b146f4ab9a250766c6af67
+
+  slack_configs:
+  - channel: '#alertas'
+    username: "monitor[Bot]"
+    color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+    title: '{{ template "custom_title" . }}'
+    text: '{{ template "custom_slack_message" . }}'
+    send_resolved: true

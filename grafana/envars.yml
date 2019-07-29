@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  envars:
+    environment:
+      GF_DEFAULT_INSTANCE_NAME: 'monitor'
+      GF_SERVER_ROOT_URL: 'https://monitor.bydefault.cl'
+      GF_SECURITY_ADMIN_PASSWORD: '123456'
+      # GF_DATABASE_TYPE: 'mysql'
+      # GF_DATABASE_HOST: '127.0.0.1:3306'
+      # GF_DATABASE_NAME: 'grafana'
+      # GF_DATABASE_USER: 'grafana'
+      # GF_DATABASE_PASSWORD: 'bydefault000'
+      # GF_DATABASE_SSL_MODE: 'false'
