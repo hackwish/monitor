@@ -36,7 +36,7 @@ receivers:
 - name: "alerts" #dummy group for all alerts
 - name: "monitor-alerts"
   pagerduty_configs:
-  - service_key: 2f1d6f5ed5b146f4ab9a250766c6af67
+  - service_key: 2f1d6f5ed5b146f4ab3323239a250766c6af67
 
   slack_configs:
   - channel: '#alertas'

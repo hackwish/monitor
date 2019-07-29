@@ -2,7 +2,7 @@ version: '2'
 
 services:
   prometheus:
-    image: monitor-prometheus
+    image: hackwish/monitor-prometheus:latest
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -15,7 +15,7 @@ services:
       TZ: America/Santiago
 
   alertmanager:
-    image: monitor-alertmanager
+    image: hackwish/monitor-alertmanager:latest
     environment:
       SET_CONTAINER_TIMEZONE: 'true'
       CONTAINER_TIMEZONE: America/Santiago
@@ -24,7 +24,7 @@ services:
       - "9093:9093"
 
   blackbox:
-    image: monitor-blackbox-exporter
+    image: hackwish/monitor-blackbox-exporter:latest
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -38,7 +38,7 @@ services:
     read_only: true
 
   metricbeat:
-    image: monitor-metricbeat
+    image: hackwish/monitor-metricbeat:latest
     ports:
       - "8080:8080"
     environment:
@@ -46,8 +46,7 @@ services:
       output.elasticsearch.hosts: "elasticsearch:9200"
 
   grafana:
-    image: monitor-grafana
-    container_name: monitor-grafana
+    image: hackwish/monitor-grafana:latest
     extends:
       file: grafana/envars.yml
       service: envars
@@ -61,7 +60,7 @@ services:
       TZ: America/Santiago
     ports:
       - "3000:3000"
-      
+
   uptimerobot:
     container_name: uptimerobot
     hostname: uptimerobot
